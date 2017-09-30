@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+# pycor-cli
+#    container/overlay, python version
+#
+
+import sys
+import traceback
+
+from pycor import interact as i
+
+
+# main()
+if __name__ == "__main__":
+
+    # need at least one argument
+    if not len(sys.argv) >= 2:
+        i.full_usage()
+        sys.exit(0)
+
+    # parse config file and check for debug flag
+    try:
+        from pycor.configparser import config
+        debug = config.getboolean('pycor', 'debug')
+    except Exception:
+        debug = True
+
+    # catch help opt
+    if sys.argv[1] in ("-h", "--help"):
+
+        if not len(sys.argv) >= 3:
+            i.bMsg("option " + str(sys.argv[1]) + " needs an argument")
+            i.full_usage()
+            sys.exit(1)
+        else:
+            try:
+                i.print_help(sys.argv[2])
+            except Exception as e:
+                if debug:
+                    i.bMsg(traceback.format_exc())
+                if str(e):
+                    i.bMsg(str(e))
+
+                i.bMsg("quitting.")
+                sys.exit(1)
+
+            # clean exit after printing help
+            sys.exit(0)
+
+    # dispatch function based on cli args
+    try:
+        from pycor.dispatch import dispatch
+        i.print_header()
+        dispatch(sys.argv[1], sys.argv[2:])
+    except Exception as e:
+        if debug:
+            i.bMsg(traceback.format_exc())
+        if str(e):
+            i.bMsg(str(e))
+
+        i.bMsg("quitting.")
+        sys.exit(1)
+
+    # clean exit
+    sys.exit(0)
