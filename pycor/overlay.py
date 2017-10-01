@@ -83,8 +83,8 @@ def launch(lxd, containerName):
         i.gMsg("enabling overlay mount..")
         mount(basePath, overlayPath, workPath, mergePath)
     except RuntimeError:
-        raise RuntimeError("overlay mount failed, are you root?")
         delete(lxd, containerName)
+        raise RuntimeError("overlay mount failed, are you root?")
 
     container.start(wait=True)
     i.gMsg(containerName + " state " + str(container.status).lower())
