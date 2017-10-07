@@ -1,25 +1,31 @@
 # pycor-cli
-### container/overlay rewrite in python
 ###### disclaimer: this project is how I'm teaching myself python
 
-Tracking a work-in-progress python rewrite of [Container/Overlay](https://github.com/Jayfrown/container-overlay).
-It leverages [OverlayFS](https://wiki.archlinux.org/index.php/Overlay_filesystem) under
-[LXD](https://linuxcontainers.org/lxd/introduction/) containers to share a single r/o base system,
-each container writing changes to its respective r/w overlay.
+work-in-progress python rewrite/refactor of [Container/Overlay](https://github.com/Jayfrown/container-overlay).
 
+## What it does
+Leverage [OverlayFS](https://wiki.archlinux.org/index.php/Overlay_filesystem)
+under [LXD](https://linuxcontainers.org/lxd/introduction/) containers to share
+a r/o rootfs, each container writing changes to its respective r/w overlay.
 
-OverlayFS is a kernel-level overlay filesystem which is very efficient in-memory.
-Containers already share a kernel, and now they can share a base system as well.
-OverlayFS eliminates storage duplicates on-disk as well as in page caches,
-so binaries across containers will reference single cached copies of shared libraries, etc.
+It can be useful in a development environment where resources are scarce, as an
+overlay implementation saves on diskspace, but in operation it also saves on
+memory usage and disk I/O.
 
+## How it works
+OverlayFS, as a kernel-level overlay implementation, is very efficient in-memory.
+It eliminates storage duplicates on-disk as well as in page caches, so processes
+across containers reference single cached copies of binaries, shared libraries,
+etc.
 
-Configured correctly, you can upgrade packages across all containers by simply
-upgrading packages in the `base` container, and remounting the overlays:
+## Who needs orchestration?
+upgrade/install/remove/configure packages across containers by doing so on
+the `base` container, and just remounting the overlays:
 ```bash
-/usr/bin/lxc start base
-/usr/bin/lxc exec base "yum -y update"
-/usr/bin/lxc stop base
+lxc start base
+lxc shell base
+  # update system, configure middleware, do whatever
+lxc stop base
 
 for overlay in $(awk '$1 == "overlay" {print $2}' /etc/mtab)
   mount -o remount $overlay
