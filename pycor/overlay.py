@@ -3,34 +3,34 @@
 #    container/overlay magic
 #
 
-import subprocess
 import os
 
+from ctypes import *
+from ctypes.util import *
 from pycor.configparser import config
 from pycor import interact as i
 
 
-# need a mount function
-def mount(base, overlay, workdir, mergedir):
+# use ctypes to call libc mount
+def mount(source, overlay, tmp, target):
 
-    # create needed directories
-    for dir in overlay, workdir, mergedir:
+    # make sure directories exist
+    for dir in overlay, tmp, target:
         if not os.path.exists(dir):
-            cmd = ['mkdir', dir]
+            os.makedirs(dir)
 
-            mkdir = subprocess.Popen(cmd)
-            mkdir.communicate()
-            if mkdir.returncode != 0:
-                raise RuntimeError()
+    libcPath = find_library("c")
+    libc = CDLL(libcPath, use_errno=True, use_last_error=True)
+    mopts = "lowerdir={},upperdir={},workdir={}".format(source, overlay, tmp)
 
     # mount overlayfs
-    opts = "lowerdir=" + base + ",upperdir=" + overlay + ",workdir=" + workdir
-    cmd = ['mount', '-t', 'overlay', 'overlay', '-o', opts, mergedir]
-
-    mount = subprocess.Popen(cmd)
-    mount.communicate()
-    if mount.returncode != 0:
-        raise RuntimeError()
+    try:
+        return libc.mount("overlay", target, "overlay", 0, mopts)
+    finally:
+        errno = get_errno()
+        if errno:
+            raise RuntimeError(
+                "Error mounting overlay: {}".format(os.strerror(errno)))
 
 
 # create base container
@@ -38,7 +38,7 @@ def create_base(lxd):
 
     conf = {
         'name': 'base',
-        'architecture': 'x86_64',
+        'architecture': config.get('launch', 'architecture'),
         'profiles': [config.get('base', 'profile')],
         'ephemeral': False,
         'source': {
@@ -46,7 +46,7 @@ def create_base(lxd):
             'mode': 'pull',
             'server': config.get('base', 'source'),
             'protocol': config.get('base', 'protocol'),
-            'alias': config.get('base', 'alias')
+            'alias': config.get('base', 'image')
         }
     }
 
@@ -59,32 +59,34 @@ def launch(lxd, containerName):
 
     conf = {
         'name': containerName,
-        'architecture': 'x86_64',
+        'architecture': config.get('launch', 'architecture'),
         'profiles': [config.get('launch', 'profile')],
         'ephemeral': config.getboolean('launch', 'ephemeral'),
-        'source': {'type': 'none'}
+        'source': {
+            'type': 'none'
+        }
     }
-
-    i.gMsg("creating " + containerName + "..")
-    container = lxd.containers.create(conf, wait=True)
 
     # some dirty variable addition
     lxdPath = config.get('lxd', 'path')
     lxdPool = config.get('lxd', 'storage_pool')
+    containerPath = "{}/storage-pools/{}/containers".format(lxdPath, lxdPool)
+    basePath = "{}/base/rootfs".format(containerPath)
 
-    containerBase = lxdPath + "/storage-pools/" + lxdPool + '/containers/'
-    basePath = containerBase + "base/rootfs"
-    overlayPath = containerBase + containerName + "/upper"
-    workPath = containerBase + containerName + "/work"
-    mergePath = containerBase + containerName + "/rootfs"
+    overlayPath = "{}/{}/upper".format(containerPath, containerName)
+    workPath = "{}/{}/work".format(containerPath, containerName)
+    mergePath = "{}/{}/rootfs".format(containerPath, containerName)
+
+    # create skeleton container
+    i.gMsg("creating " + containerName + "..")
+    container = lxd.containers.create(conf, wait=True)
 
     # mount overlay
     try:
-        i.gMsg("enabling overlay mount..")
         mount(basePath, overlayPath, workPath, mergePath)
-    except RuntimeError:
+    except Exception:
         delete(lxd, containerName)
-        raise RuntimeError("overlay mount failed, are you root?")
+        raise
 
     container.start(wait=True)
     i.gMsg(containerName + " state " + str(container.status).lower())
