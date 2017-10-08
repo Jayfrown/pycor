@@ -38,7 +38,7 @@ def create_base(lxd):
 
     conf = {
         'name': 'base',
-        'architecture': 'x86_64',
+        'architecture': config.get('base', 'architecture'),
         'profiles': [config.get('base', 'profile')],
         'ephemeral': False,
         'source': {
@@ -46,7 +46,7 @@ def create_base(lxd):
             'mode': 'pull',
             'server': config.get('base', 'source'),
             'protocol': config.get('base', 'protocol'),
-            'alias': config.get('base', 'alias')
+            'alias': config.get('base', 'image')
         }
     }
 
@@ -59,10 +59,12 @@ def launch(lxd, containerName):
 
     conf = {
         'name': containerName,
-        'architecture': 'x86_64',
+        'architecture': config.get('launch', 'architecture'),
         'profiles': [config.get('launch', 'profile')],
         'ephemeral': config.getboolean('launch', 'ephemeral'),
-        'source': {'type': 'none'}
+        'source': {
+            'type': 'none'
+        }
     }
 
     i.gMsg("creating " + containerName + "..")
@@ -71,12 +73,12 @@ def launch(lxd, containerName):
     # some dirty variable addition
     lxdPath = config.get('lxd', 'path')
     lxdPool = config.get('lxd', 'storage_pool')
+    containerPath = "{}/storage-pools/{}/containers".format(lxdPath, lxdPool)
+    basePath = "{}/base/rootfs".format(containerPath)
 
-    containerBase = lxdPath + "/storage-pools/" + lxdPool + '/containers/'
-    basePath = containerBase + "base/rootfs"
-    overlayPath = containerBase + containerName + "/upper"
-    workPath = containerBase + containerName + "/work"
-    mergePath = containerBase + containerName + "/rootfs"
+    overlayPath = "{}/{}/upper".format(containerPath, containerName)
+    workPath = "{}/{}/work".format(containerPath, containerName)
+    mergePath = "{}/{}/rootfs".format(containerPath, containerName)
 
     # mount overlay
     try:
