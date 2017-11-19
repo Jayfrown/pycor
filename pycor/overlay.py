@@ -71,8 +71,8 @@ def launch(lxd, containerName):
     lxdPath = config.get('lxd', 'path')
     lxdPool = config.get('lxd', 'storage_pool')
     containerPath = "{}/storage-pools/{}/containers".format(lxdPath, lxdPool)
-    basePath = "{}/base/rootfs".format(containerPath)
 
+    basePath = "{}/base/rootfs".format(containerPath)
     overlayPath = "{}/{}/upper".format(containerPath, containerName)
     workPath = "{}/{}/work".format(containerPath, containerName)
     mergePath = "{}/{}/rootfs".format(containerPath, containerName)
