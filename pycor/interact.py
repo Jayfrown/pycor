@@ -11,14 +11,14 @@ import textwrap
 try:
     from termcolor import colored
 except Exception:
-    def colored(args, bogus):
-        return args
+    def colored(string, bogus):
+        return string
 
 # message types
-def gMsg(args, **kwargs):
-    print(colored("pycor", 'blue') + ':', args, file=sys.stdout, **kwargs)
-def bMsg(args, **kwargs):
-    print(colored("pycor",  'red') + ':', args, file=sys.stderr, **kwargs)
+def gMsg(string, **kwargs):
+    print(colored("pycor", 'blue') + ':', string, file=sys.stdout, **kwargs)
+def bMsg(string, **kwargs):
+    print(colored("pycor",  'red') + ':', string, file=sys.stderr, **kwargs)
 
 # program header
 def print_header():
