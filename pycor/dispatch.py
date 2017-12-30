@@ -5,6 +5,13 @@
 
 from pycor import interact as i
 
+# init local pylxd connection
+def lxdClient():
+    try:
+        from pylxd import Client, exceptions
+        return Client()
+    except exceptions.ClientConnectionFailed:
+        raise RuntimeError("local lxd connection failed")
 
 # dispatch based on cli args
 def dispatch(cmd, args):
@@ -12,13 +19,7 @@ def dispatch(cmd, args):
     # launch a new container
     if cmd == "launch":
         from pycor import overlay
-
-        # init local pylxd connection
-        try:
-            from pylxd import Client, exceptions
-            conn = Client()
-        except exceptions.ClientConnectionFailed:
-            raise RuntimeError("local lxd connection failed")
+        conn = lxdClient()
 
         # create base if it doesn't exist
         try:
@@ -39,12 +40,7 @@ def dispatch(cmd, args):
     # delete overlain container
     elif cmd == "delete":
         from pycor import overlay
-
-        try:
-            from pylxd import Client, exceptions
-            conn = Client()
-        except exceptions.ClientConnectionFailed:
-            raise RuntimeError("local lxd connection failed")
+        conn = lxdClient()
 
         if args:
             overlay.delete(conn, args[0])
