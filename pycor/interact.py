@@ -42,9 +42,4 @@ def full_usage():
 
 # help messages
 def print_help(topic):
-    if topic == "launch":
-        print("help for launch")
-    elif topic == "delete":
-        print("help for delete")
-    else:
-        raise RuntimeError("unknown action: " + str(topic))
+    raise NotImplementedError("help is not implemented")
