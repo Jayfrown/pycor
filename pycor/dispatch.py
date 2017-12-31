@@ -9,7 +9,9 @@ from pycor import interact as i
 def lxdClient():
     try:
         from pylxd import Client, exceptions
-        return Client()
+        return Client(), exceptions
+    except ImportError:
+        raise
     except exceptions.ClientConnectionFailed:
         raise RuntimeError("local lxd connection failed")
 
@@ -19,12 +21,12 @@ def dispatch(cmd, args):
     # launch a new container
     if cmd == "launch":
         from pycor import overlay
-        conn = lxdClient()
+        conn, lxdException = lxdClient()
 
         # create base if it doesn't exist
         try:
             conn.containers.get('base')
-        except exceptions.NotFound:
+        except lxdException.NotFound:
             i.bMsg("no base container found, initializing environment")
             overlay.create_base(conn)
 
@@ -40,7 +42,7 @@ def dispatch(cmd, args):
     # delete overlain container
     elif cmd == "delete":
         from pycor import overlay
-        conn = lxdClient()
+        conn, lxdException = lxdClient()
 
         if args:
             overlay.delete(conn, args[0])
