@@ -1,48 +1,28 @@
 # pycor-cli
-work-in-progress python rewrite/refactor of
-[Container/Overlay](https://github.com/Jayfrown/container-overlay).
+work-in-progress python rewrite/refactor of [Container/Overlay](https://github.com/Jayfrown/container-overlay).
 
 &nbsp;
 
 ## What it does
-Leverage [OverlayFS](https://wiki.archlinux.org/index.php/Overlay_filesystem)
-under [LXD](https://linuxcontainers.org/lxd/introduction/) operating system
-containers to share a `r/o` rootfs, each container writing changes (i.e.
-local configuration, application data) to its respective `r/w` overlay.
+Leverage [OverlayFS](https://wiki.archlinux.org/index.php/Overlay_filesystem) under unprivileged OS-level [LXD](https://linuxcontainers.org/lxd/introduction/) containers to share a `r/o` rootfs, each container writing changes (i.e. local packages, drop-in configuration, application data) to its respective `r/w` overlay.
 
-It can be useful in a development environment where resources are scarce, as
-OverlayFS saves diskspace, but in operation also saves memory usage and disk
-I/O, which ultimately means more containers on the same hardware.
+It can be useful in a development environment where resources are scarce, as OverlayFS inherently saves diskspace, but also saves memory usage and disk I/O, which ultimately allows more containers on the same hardware.
 
 Maybe it's stable enough for production scale workloads. Hasn't failed me yet!
 
-&nbsp;
-
 ## How it works
-OverlayFS, as a mainline kernel-level overlay implementation, is very efficient
-in-memory. Containers reading a file from the `r/o` filesystem will result in
-one disk I/O operation, adding the file(s) to the Linux Page Cache.
+OverlayFS, as a mainline kernel-level overlay implementation, is very efficient in terms of performance. Containers reading a file from the `r/o` filesystem will result in one disk I/O operation, adding the file(s) to the Linux [Page Cache](https://en.wikipedia.org/wiki/Page_cache). Further `read()` calls will effectively read from RAM.
 
-Processes across containers essentially reference a single cached operating
-system: binaries, shared libraries/objects, etc. Like running application
-containers without exposing the host operating system.
+Processes across containers essentially reference a single cached operating system: binaries, shared libraries/objects, and default configuration is first read from the `r/o` filesystem, and later from the Linux Page Cache. Local drop-in configuration can be maintained in individual `r/w` overlays and easily changed during runtime.
 
-Containers suffer less I/O overhead as they don't need to read from their
-respective rootfs located on seperate storage. Given enough host RAM, the
-entire `r/o` operating system fits in the page cache.
-
-&nbsp;
+Containers suffer less I/O overhead since the operating system is mostly cached, reducing access to secondary storage. At scale, this significantly decreases disk I/O for the hypervisor, adding another performance benefit.
 
 ## Orchestration benefits
-This allows for perfect centralized control over packages and their
-global configuration. Local configuration can usually be included from files
-written to `r/w` overlays - which could be puppet managed.
+This allows centralized control over packages and their global configuration. Local configuration can usually be included as drop-in files written to `r/w` overlays - which could be puppet managed.
 
-In terms of Apache HTTPd: `httpd.conf` resides in the `r/o` operating system,
-while the included `vhost.conf` is puppet-managed per container.
+In terms of Apache HTTPd: `httpd.conf` resides in the `r/o` operating system, while the included `vhost.conf` is puppet-managed per container.
 
-upgrade/install/remove/configure packages and middleware across containers by
-doing so on the `base` container, and remounting the overlays:
+upgrade/install/remove/configure packages and middleware across containers by doing so on the `base` container, and remounting the overlays:
 ```bash
 lxc start base
 lxc shell base
