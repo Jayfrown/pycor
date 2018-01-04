@@ -39,6 +39,7 @@ if __name__ == "__main__":
                 if debug:
                     i.bMsg(traceback.format_exc())
                 if str(e):
+                    print ""
                     i.bMsg(str(e).lower())
 
                 i.bMsg("quitting.")
@@ -54,6 +55,7 @@ if __name__ == "__main__":
         if debug:
             i.bMsg(traceback.format_exc())
         if str(e):
+            print ""
             i.bMsg(str(e).lower())
 
         i.bMsg("quitting.")
