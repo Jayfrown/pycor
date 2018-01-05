@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     # need at least one argument
     if not len(sys.argv) >= 2:
-        i.full_usage()
+        i.print_usage()
         sys.exit(0)
 
     # parse config file and check for debug flag
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
         if not len(sys.argv) >= 3:
             i.bMsg("option " + str(sys.argv[1]) + " needs an argument")
-            i.full_usage()
+            i.print_usage()
             sys.exit(1)
         else:
             try:
