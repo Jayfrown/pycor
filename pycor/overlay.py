@@ -7,8 +7,9 @@ import os
 
 from ctypes import *
 from ctypes.util import *
-from pycor.configparser import config
 from pycor import interact as i
+from pycor.lxdClient import lxd
+from pycor.configparser import config
 
 
 # use ctypes to call libc mount
@@ -34,7 +35,7 @@ def mount(source, overlay, tmp, target):
 
 
 # create base container
-def create_base(lxd):
+def create_base():
 
     conf = {
         'name': 'base',
@@ -55,7 +56,7 @@ def create_base(lxd):
 
 
 # launch a new overlain container
-def launch(lxd, containerName):
+def launch(containerName):
 
     conf = {
         'name': containerName,
@@ -85,7 +86,7 @@ def launch(lxd, containerName):
     try:
         mount(basePath, overlayPath, workPath, mergePath)
     except Exception:
-        delete(lxd, containerName)
+        delete(containerName)
         raise
 
     container.start(wait=True)
@@ -93,7 +94,7 @@ def launch(lxd, containerName):
 
 
 # delete overlay
-def delete(lxd, containerName):
+def delete(containerName):
     container = lxd.containers.get(containerName)
     container.stop()
     container.delete(wait=True)
