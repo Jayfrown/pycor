@@ -7,56 +7,20 @@ import sys
 import traceback
 
 from pycor import interact as i
+from pycor.optparser import optargs
 
 
-# main()
 if __name__ == "__main__":
 
-    # need at least one argument
-    if not len(sys.argv) >= 2:
-        i.print_usage()
-        sys.exit(0)
-
-    # parse config file and check for debug flag
-    try:
-        from pycor.configparser import config
-        debug = config.getboolean('pycor', 'debug')
-    except Exception:
-        debug = True
-
-    # catch help opt
-    if sys.argv[1] in ("-h", "--help"):
-
-        if not len(sys.argv) >= 3:
-            i.bMsg("option " + str(sys.argv[1]) + " needs an argument")
-            i.print_usage()
-            sys.exit(1)
-        else:
-            try:
-                i.print_help(sys.argv[2])
-                sys.exit(0)
-            except Exception as e:
-                if debug:
-                    i.bMsg(traceback.format_exc())
-                if str(e):
-                    print ""
-                    i.bMsg(str(e).lower())
-
-                i.bMsg("quitting.")
-                sys.exit(1)
+    # catch debug opt
+    debug = True if optargs['--debug'] else False
 
     try:
         # dispatch function based on cli args
         from pycor.dispatch import dispatch
-        i.print_header()
-        dispatch(sys.argv[1], sys.argv[2:])
+        dispatch( optargs['<action>'], optargs['<args>'] )
         sys.exit(0)
-    except Exception as e:
-        if debug:
-            i.bMsg(traceback.format_exc())
-        if str(e):
-            print ""
-            i.bMsg(str(e).lower())
 
-        i.bMsg("quitting.")
+    except Exception as e:
+        i.bMsg(str(e)) if not debug else i.bMsg(traceback.format_exc())
         sys.exit(1)

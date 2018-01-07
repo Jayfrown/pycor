@@ -12,9 +12,6 @@ config = SafeConfigParser()
 
 # generate config file
 if not os.path.isfile(file):
-    config.add_section('pycor')
-    config.set('pycor', 'debug', 'False')
-
     config.add_section('lxd')
     config.set('lxd', 'path', '/var/lib/lxd')
     config.set('lxd', 'storage_pool', 'default')

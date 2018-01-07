@@ -1,2 +1,2 @@
-termcolor==1.1.0
-pylxd==2.2.4
+pylxd
+docopt
