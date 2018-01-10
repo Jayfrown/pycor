@@ -7,8 +7,8 @@ import os
 
 from ctypes import *
 from ctypes.util import *
-from pycor import interact as i
 from pycor.lxdClient import lxd
+from pycor.loghandler import logger
 from pycor.configparser import config
 
 
@@ -31,7 +31,7 @@ def mount(source, overlay, tmp, target):
         errno = get_errno()
         if errno:
             raise RuntimeError(
-                "Error mounting overlay: {}".format(os.strerror(errno)))
+                "error mounting overlay: {}".format(os.strerror(errno)))
 
 
 # create base container
@@ -51,7 +51,7 @@ def create_base():
         }
     }
 
-    i.gMsg("creating base container..")
+    logger.info("creating base container for r/o overlay rootfs")
     lxd.containers.create(conf, wait=True)
 
 
@@ -79,22 +79,33 @@ def launch(containerName):
     mergePath = "{}/{}/rootfs".format(containerPath, containerName)
 
     # create skeleton container
-    i.gMsg("creating " + containerName + "..")
+    logger.info("launching {}".format(containerName))
     container = lxd.containers.create(conf, wait=True)
 
     # mount overlay
     try:
         mount(basePath, overlayPath, workPath, mergePath)
     except Exception:
+        logger.debug("overlayfs mount failed, deleting broken container")
         delete(containerName)
         raise
 
     container.start(wait=True)
-    i.gMsg(containerName + " state " + str(container.status).lower())
+    logger.info("{} state {}".format(containerName, container.status))
 
 
 # delete overlay
 def delete(containerName):
     container = lxd.containers.get(containerName)
-    container.stop()
+    logger.debug("{} state {}".format(containerName, container.status))
+
+    # test if we need to stop it
+    if container.status == "Running":
+        logger.info("stopping {}".format(containerName))
+        container.stop(wait=True)
+        logger.debug("{} state {}".format(containerName, container.status))
+
+    # wait=True or test if it's already stopped
+    logger.info("deleting {}".format(containerName))
+    logger.info("note: umount not yet implemented")
     container.delete(wait=True)

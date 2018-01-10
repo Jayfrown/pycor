@@ -6,21 +6,29 @@
 import sys
 import traceback
 
-from pycor import interact as i
+from pycor.loghandler import logger, logging, sh
 from pycor.optparser import optargs
 
 
 if __name__ == "__main__":
 
     # catch debug opt
-    debug = True if optargs['--debug'] else False
+    if optargs['--debug']:
+        debug = True
+        logger.setLevel(logging.DEBUG)
+        sh.setLevel(logging.DEBUG)
+    else:
+        debug = False
+
 
     try:
-        # dispatch function based on cli args
         from pycor.dispatch import dispatch
-        dispatch( optargs['<action>'], optargs['<args>'] )
+
+        # dispatch function based on cli args
+        dispatch(optargs['<action>'], optargs['<args>'])
         sys.exit(0)
 
     except Exception as e:
-        i.bMsg(str(e)) if not debug else i.bMsg(traceback.format_exc())
+        logger.error(str(e))
+        logger.debug(traceback.format_exc())
         sys.exit(1)

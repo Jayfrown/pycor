@@ -3,7 +3,7 @@
 #    dispatch function based on cli args
 #
 
-from pycor import interact as i
+from pycor.loghandler import logger
 from pycor.lxdClient import lxd
 from pycor.lxdClient import lxdException
 
@@ -17,9 +17,10 @@ def dispatch(cmd, args):
 
         # create base if it doesn't exist
         try:
+            logger.debug("testing for base container")
             lxd.containers.get('base')
         except lxdException.NotFound:
-            i.bMsg("initializing environment")
+            logger.info("initializing environment")
             overlay.create_base()
 
         # new overlay
@@ -28,8 +29,10 @@ def dispatch(cmd, args):
         else:
             import requests
             link = "https://frightanic.com/goodies_content/docker-names.php"
+            logger.debug("fetching docker-like name")
             generatedName = requests.get(link).text.strip().replace("_", "-")
             overlay.launch(generatedName)
+
 
     # delete overlain container
     elif cmd == "delete":
@@ -38,8 +41,9 @@ def dispatch(cmd, args):
         if args:
             overlay.delete(args[0])
         else:
-            raise RuntimeError(cmd + ": need a container name")
+            raise RuntimeError("{}: need a container name".format(cmd))
+
 
     # catch-all
     else:
-        raise RuntimeError("unknown action: " + str(cmd))
+        raise RuntimeError("unknown action: {}".format(cmd))
