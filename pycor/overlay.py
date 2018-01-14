@@ -32,7 +32,17 @@ from pycor.configparser import config
 
 
 # use ctypes to call libc mount
-def mount(source, overlay, tmp, target):
+def mount(containerName):
+
+    # some dirty variable addition
+    lxdPath = config.get('lxd', 'path')
+    lxdPool = config.get('lxd', 'storage_pool')
+    containerPath = "{}/storage-pools/{}/containers".format(lxdPath, lxdPool)
+
+    source = "{}/base/rootfs".format(containerPath)
+    target = "{}/{}/rootfs".format(containerPath, containerName)
+    overlay = "{}/{}/upper".format(containerPath, containerName)
+    tmp = "{}/{}/work".format(containerPath, containerName)
 
     # make sure directories exist
     for dir in overlay, tmp, target:
@@ -45,6 +55,8 @@ def mount(source, overlay, tmp, target):
 
     # mount overlayfs
     try:
+        logger.info("mounting overlay on {}".format(target))
+        logger.debug('libc.mount("overlay", {}, "overlay", 0, {})'.format(target, mopts))
         return libc.mount("overlay", target, "overlay", 0, mopts)
     finally:
         errno = get_errno()
@@ -71,7 +83,7 @@ def create_base():
     }
 
     logger.info("creating base container for r/o overlay rootfs")
-    lxd.containers.create(conf, wait=True)
+    return lxd.containers.create(conf, wait=True)
 
 
 # launch a new overlain container
@@ -87,44 +99,6 @@ def launch(containerName):
         }
     }
 
-    # some dirty variable addition
-    lxdPath = config.get('lxd', 'path')
-    lxdPool = config.get('lxd', 'storage_pool')
-    containerPath = "{}/storage-pools/{}/containers".format(lxdPath, lxdPool)
-
-    basePath = "{}/base/rootfs".format(containerPath)
-    overlayPath = "{}/{}/upper".format(containerPath, containerName)
-    workPath = "{}/{}/work".format(containerPath, containerName)
-    mergePath = "{}/{}/rootfs".format(containerPath, containerName)
-
     # create skeleton container
     logger.info("launching {}".format(containerName))
-    container = lxd.containers.create(conf, wait=True)
-
-    # mount overlay
-    try:
-        mount(basePath, overlayPath, workPath, mergePath)
-    except Exception:
-        logger.debug("overlayfs mount failed, deleting broken container")
-        delete(containerName)
-        raise
-
-    container.start(wait=True)
-    logger.info("{} state {}".format(containerName, container.status))
-
-
-# delete overlay
-def delete(containerName):
-    container = lxd.containers.get(containerName)
-    logger.debug("{} state {}".format(containerName, container.status))
-
-    # test if we need to stop it
-    if container.status == "Running":
-        logger.info("stopping {}".format(containerName))
-        container.stop(wait=True)
-        logger.debug("{} state {}".format(containerName, container.status))
-
-    # wait=True or test if it's already stopped
-    logger.info("deleting {}".format(containerName))
-    logger.info("note: umount not yet implemented")
-    container.delete(wait=True)
+    return lxd.containers.create(conf, wait=True)

@@ -22,17 +22,19 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
-import traceback
-
-from pycor.loghandler import logger, logging, sh
-from pycor.optparser import optargs
-
-
 if __name__ == "__main__":
+    import sys, traceback
+    from pycor.loghandler import logger
+    from pycor.optparser import optargs
+
+    print "Container/Overlay"
+    print "leverage overlayfs under lxd containers"
+    print
+
 
     # catch debug opt
     if optargs['--debug']:
+        from pycor.loghandler import logging, sh
         debug = True
         logger.setLevel(logging.DEBUG)
         sh.setLevel(logging.DEBUG)
