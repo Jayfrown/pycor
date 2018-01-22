@@ -22,9 +22,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Container/Overlay
-leverage overlayfs with lxd containers
-
+"""
 pycor   Copyright (C) 2018   Jeroen de Boer (info@jayfrown.nl)
 This program is free software; you are free to use, modify and/or
 redistribute it under certain conditions. See LICENSE for details.

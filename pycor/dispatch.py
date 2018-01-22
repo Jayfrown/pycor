@@ -22,17 +22,24 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pycor.loghandler import logger
-from pycor.lxdClient import lxd
-from pycor.lxdClient import lxdException
-
-
 # dispatch based on cli args
 def dispatch(cmd, args):
 
     # launch a new container
     if cmd == "launch":
+        from pycor.loghandler import logger
+        from pycor.lxdClient import lxd
+        from pycor.lxdClient import lxdException
         from pycor import overlay
+
+        # get container name
+        if args:
+            containerName = args[0]
+        else:
+            import requests
+            link = "https://frightanic.com/goodies_content/docker-names.php"
+            logger.debug("fetching docker-like name")
+            containerName = requests.get(link).text.strip().replace("_", "-")
 
         # create base if it doesn't exist
         try:
@@ -42,26 +49,32 @@ def dispatch(cmd, args):
             logger.info("initializing environment")
             overlay.create_base()
 
-        # new overlay
-        if args:
-            overlay.launch(args[0])
-        else:
-            import requests
-            link = "https://frightanic.com/goodies_content/docker-names.php"
-            logger.debug("fetching docker-like name")
-            generatedName = requests.get(link).text.strip().replace("_", "-")
-            overlay.launch(generatedName)
+        # new container on overlayfs
+        container = overlay.launch(containerName)
+        overlay.mount(containerName)
+        container.start(wait=True)
 
-
-    # delete overlain container
+    # umount overlay and delete container
     elif cmd == "delete":
+        from pycor.loghandler import logger
+        from pycor.lxdClient import lxd
+        from pycor.lxdClient import lxdException
         from pycor import overlay
 
         if args:
-            overlay.delete(args[0])
+            container = lxd.containers.get(args[0])
         else:
             raise RuntimeError("{}: need a container name".format(cmd))
 
+        # test if we need to stop it
+        if container.status == "Running":
+            logger.info("stopping {}".format(container.name))
+            container.stop(wait=True)
+            logger.debug("{} state {}".format(container.name, container.status))
+
+        logger.info("note: umount not yet implemented")
+        logger.info("deleting {}".format(container.name))
+        container.delete(wait=True)
 
     # catch-all
     else:

@@ -22,32 +22,37 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
-import traceback
-
-from pycor.loghandler import logger, logging, sh
-from pycor.optparser import optargs
-
-
 if __name__ == "__main__":
 
-    # catch debug opt
+    # explain yourself, I guess
+    print "Container/Overlay"
+    print "leverage overlayfs under lxd containers"
+    print
+
+    # implement a stable cli
+    from pycor.optparser import optargs
+    from pycor.loghandler import logger
+
+    # catch cli debug opt
     if optargs['--debug']:
+        from pycor.loghandler import logging, sh
         debug = True
         logger.setLevel(logging.DEBUG)
         sh.setLevel(logging.DEBUG)
     else:
         debug = False
 
-
+    # dispatch function(s) based on cli args
     try:
+        import sys
+        from traceback import format_exc as trace
         from pycor.dispatch import dispatch
 
-        # dispatch function based on cli args
         dispatch(optargs['<action>'], optargs['<args>'])
         sys.exit(0)
 
+    # log exception(s)
     except Exception as e:
         logger.error(str(e))
-        logger.debug(traceback.format_exc())
+        logger.debug(trace())
         sys.exit(1)
