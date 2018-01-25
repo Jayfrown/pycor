@@ -27,18 +27,15 @@ import os
 from ctypes import *
 from ctypes.util import *
 from pycor.lxdClient import lxd
-from pycor.loghandler import logger
 from pycor.configparser import config
 
 
 # use ctypes to call libc mount
 def mount(containerName):
-
     # some dirty variable addition
     lxdPath = config.get('lxd', 'path')
     lxdPool = config.get('lxd', 'storage_pool')
     containerPath = "{}/storage-pools/{}/containers".format(lxdPath, lxdPool)
-
     source = "{}/base/rootfs".format(containerPath)
     target = "{}/{}/rootfs".format(containerPath, containerName)
     overlay = "{}/{}/upper".format(containerPath, containerName)
@@ -55,8 +52,6 @@ def mount(containerName):
 
     # mount overlayfs
     try:
-        logger.info("mounting overlay on {}".format(target))
-        logger.debug('libc.mount("overlay", {}, "overlay", 0, {})'.format(target, mopts))
         return libc.mount("overlay", target, "overlay", 0, mopts)
     finally:
         errno = get_errno()
@@ -67,7 +62,6 @@ def mount(containerName):
 
 # create base container
 def create_base():
-
     conf = {
         'name': 'base',
         'architecture': config.get('base', 'architecture'),
@@ -82,23 +76,19 @@ def create_base():
         }
     }
 
-    logger.info("creating base container for r/o overlay rootfs")
     return lxd.containers.create(conf, wait=True)
 
 
-# launch a new overlain container
+# create a new (empty) container
 def launch(containerName):
-
     conf = {
         'name': containerName,
         'architecture': config.get('launch', 'architecture'),
         'profiles': [config.get('launch', 'profile')],
         'ephemeral': config.getboolean('launch', 'ephemeral'),
-        'source': {
+        'source': { # empty rootfs to mount on
             'type': 'none'
         }
     }
 
-    # create skeleton container
-    logger.info("launching {}".format(containerName))
     return lxd.containers.create(conf, wait=True)

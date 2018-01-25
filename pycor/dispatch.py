@@ -1,6 +1,6 @@
 ##
 # pycor/dispatch.py
-#    dispatch function based on cli args
+#    dispatch function(s) based on cli args
 #
 #   This file is a part of the pycor project. To obtain the latest
 #   development version, head over to the git repository available
@@ -43,16 +43,19 @@ def dispatch(cmd, args):
 
         # create base if it doesn't exist
         try:
-            logger.debug("testing for base container")
             lxd.containers.get('base')
         except lxdException.NotFound:
-            logger.info("initializing environment")
+            logger.debug("initializing base environment")
             overlay.create_base()
 
         # new container on overlayfs
+        logger.debug("creating {}".format(containerName))
         container = overlay.launch(containerName)
-        overlay.mount(containerName)
+        logger.debug("mounting overlay")
+        overlay.mount(container.name)
         container.start(wait=True)
+        logger.debug("{} state {}".format(container.name, container.status))
+        logger.info("created {}".format(container.name))
 
     # umount overlay and delete container
     elif cmd == "delete":
@@ -64,18 +67,17 @@ def dispatch(cmd, args):
         if args:
             container = lxd.containers.get(args[0])
         else:
-            raise RuntimeError("{}: need a container name".format(cmd))
+            raise RuntimeError("which one?")
 
         # test if we need to stop it
         if container.status == "Running":
-            logger.info("stopping {}".format(container.name))
-            container.stop(wait=True)
             logger.debug("{} state {}".format(container.name, container.status))
+            raise RuntimeError("{} is running, refusing to delete".format(container.name))
 
         logger.info("note: umount not yet implemented")
-        logger.info("deleting {}".format(container.name))
         container.delete(wait=True)
+        logger.info("deleted {}".format(container.name))
 
     # catch-all
     else:
-        raise RuntimeError("unknown action: {}".format(cmd))
+        raise RuntimeError("{}: unknown action".format(cmd))
