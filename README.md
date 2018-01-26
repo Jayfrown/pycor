@@ -1,4 +1,4 @@
-# pycor-cli
+# pycor
 python2 rewrite of [Container/Overlay](https://github.com/Jayfrown/container-overlay).
 
 &nbsp;
