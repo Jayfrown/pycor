@@ -27,10 +27,10 @@ def dispatch(cmd, args):
 
     # launch a new container
     if cmd == "launch":
-        from pycor.loghandler import logger
-        from pycor.lxdClient import lxd
-        from pycor.lxdClient import lxdException
-        from pycor import overlay
+        from .loghandler import logger
+        from .lxdClient import lxd
+        from .lxdClient import lxdException
+        from . import overlay
 
         # get container name
         if args:
@@ -61,10 +61,10 @@ def dispatch(cmd, args):
 
     # umount overlay and delete container
     elif cmd == "delete":
-        from pycor.loghandler import logger
-        from pycor.lxdClient import lxd
-        from pycor.lxdClient import lxdException
-        from pycor import overlay
+        from .loghandler import logger
+        from .lxdClient import lxd
+        from .lxdClient import lxdException
+        from . import overlay
 
         if args:
             container = lxd.containers.get(args[0])

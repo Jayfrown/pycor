@@ -22,8 +22,8 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pycor.lxdClient import lxd
-from pycor.configparser import config
+from .lxdClient import lxd
+from .configparser import config
 
 
 # use ctypes to call libc mount
