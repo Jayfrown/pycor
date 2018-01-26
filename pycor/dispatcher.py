@@ -51,8 +51,10 @@ def dispatch(cmd, args):
         # new container on overlayfs
         logger.debug("creating {}".format(containerName))
         container = overlay.launch(containerName)
-        logger.debug("mounting overlay")
+
+        logger.debug("mounting overlayfs")
         overlay.mount(container.name)
+
         container.start(wait=True)
         logger.debug("{} state {}".format(container.name, container.status))
         logger.info("created {}".format(container.name))

@@ -36,17 +36,14 @@ if __name__ == "__main__":
     # catch cli debug opt
     if optargs['--debug']:
         from pycor.loghandler import logging, sh
-        debug = True
         logger.setLevel(logging.DEBUG)
         sh.setLevel(logging.DEBUG)
-    else:
-        debug = False
 
     # dispatch function(s) based on cli args
     try:
         import sys
         from traceback import format_exc as trace
-        from pycor.dispatch import dispatch
+        from pycor.dispatcher import dispatch
 
         dispatch(optargs['<action>'], optargs['<args>'])
         sys.exit(0)

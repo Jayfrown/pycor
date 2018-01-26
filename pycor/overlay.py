@@ -22,16 +22,14 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
-
-from ctypes import *
-from ctypes.util import *
 from pycor.lxdClient import lxd
 from pycor.configparser import config
 
 
 # use ctypes to call libc mount
 def mount(containerName):
+    import os, ctypes
+
     # some dirty variable addition
     lxdPath = config.get('lxd', 'path')
     lxdPool = config.get('lxd', 'storage_pool')
@@ -46,15 +44,15 @@ def mount(containerName):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-    libcPath = find_library("c")
-    libc = CDLL(libcPath, use_errno=True, use_last_error=True)
+    libcPath = ctypes.util.find_library("c")
+    libc = ctypes.CDLL(libcPath, use_errno=True, use_last_error=True)
     mopts = "lowerdir={},upperdir={},workdir={}".format(source, overlay, tmp)
 
     # mount overlayfs
     try:
         return libc.mount("overlay", target, "overlay", 0, mopts)
     finally:
-        errno = get_errno()
+        errno = ctypes.get_errno()
         if errno:
             raise RuntimeError(
                 "error mounting overlay: {}".format(os.strerror(errno)))
