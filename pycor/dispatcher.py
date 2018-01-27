@@ -22,15 +22,16 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from .loghandler import logger
+from .lxdClient import lxd
+from .lxdClient import lxdException
+from . import overlay
+
 # dispatch based on cli args
 def dispatch(cmd, args):
 
     # launch a new container
     if cmd == "launch":
-        from .loghandler import logger
-        from .lxdClient import lxd
-        from .lxdClient import lxdException
-        from . import overlay
 
         # get container name
         if args:
@@ -49,22 +50,22 @@ def dispatch(cmd, args):
             overlay.create_base()
 
         # new container on overlayfs
-        logger.debug("creating {}".format(containerName))
-        container = overlay.launch(containerName)
+        try:
+            logger.debug("creating {}".format(containerName))
+            container = overlay.launch(containerName)
 
-        logger.debug("mounting overlayfs")
-        overlay.mount(container.name)
+            logger.debug("mounting overlayfs")
+            overlay.mount(container.name)
 
-        container.start(wait=True)
-        logger.debug("{} state {}".format(container.name, container.status))
-        logger.info("created {}".format(container.name))
+            container.start(wait=True)
+            logger.debug("{} state {}".format(container.name, container.status))
+            logger.info("created {}".format(container.name))
+        except Exception:
+            container.delete()
+            raise
 
     # umount overlay and delete container
     elif cmd == "delete":
-        from .loghandler import logger
-        from .lxdClient import lxd
-        from .lxdClient import lxdException
-        from . import overlay
 
         if args:
             container = lxd.containers.get(args[0])
