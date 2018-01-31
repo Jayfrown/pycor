@@ -1,0 +1,56 @@
+##
+# pycor/cli.py
+#   use docopt to implement a cli
+#
+#   This file is a part of the pycor project. To obtain the latest
+#   development version, head over to the git repository available
+#   at github: https://github.com/Jayfrown/pycor
+#
+#   Copyright (C) 2018  Jeroen de Boer (info@jayfrown.nl)
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+def main():
+    """initialize the program as a cli"""
+
+    # explain yourself, I guess
+    print "Container/Overlay"
+    print "leverage overlayfs under lxd containers"
+    print
+
+    # implement a stable cli
+    from pycor.optparser import optargs
+    from pycor.loghandler import logger
+
+    # catch cli debug opt
+    if optargs['--debug']:
+        from pycor.loghandler import logging, sh
+        logger.setLevel(logging.DEBUG)
+        sh.setLevel(logging.DEBUG)
+
+    # dispatch function(s) based on cli args
+    try:
+        import sys
+        from traceback import format_exc as trace
+        from pycor.dispatcher import dispatch
+
+        dispatch(optargs['<action>'], optargs['<args>'])
+        sys.exit(0)
+
+    # log exception(s) to stderr
+    except Exception as e:
+        logger.error(str(e))
+        logger.debug(trace())
+        sys.exit(1)
