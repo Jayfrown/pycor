@@ -1,6 +1,6 @@
 ##
 # pycor/docopt.py
-#    use docopt to create a stable cli
+#   use docopt to create a stable cli
 #
 #   This file is a part of the pycor project. To obtain the latest
 #   development version, head over to the git repository available

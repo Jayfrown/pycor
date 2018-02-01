@@ -1,6 +1,6 @@
 ##
-# pycor/lxdClient.py
-#    initialize local pylxd connection
+# pycor/pylxdclient.py
+#   initialize local pylxd connection
 #
 #   This file is a part of the pycor project. To obtain the latest
 #   development version, head over to the git repository available

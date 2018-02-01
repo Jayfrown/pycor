@@ -1,6 +1,6 @@
 ##
 # pycor/config.py
-#    config parser
+#   config parser
 #
 #   This file is a part of the pycor project. To obtain the latest
 #   development version, head over to the git repository available

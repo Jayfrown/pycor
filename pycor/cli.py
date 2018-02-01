@@ -23,7 +23,7 @@
 #
 
 def main():
-    """initialize the program as a cli"""
+    """implement a stable cli, call the dispatcher, log exceptions"""
 
     # explain yourself, I guess
     print "Container/Overlay"
@@ -52,5 +52,5 @@ def main():
     # log exception(s) to stderr
     except Exception as e:
         logger.error(str(e))
-        logger.debug(trace())
+        logger.debug(trace(10))
         sys.exit(1)

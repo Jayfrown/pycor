@@ -1,6 +1,6 @@
 ##
 # pycor/overlay.py
-#    container/overlay magic
+#   container/overlay magic
 #
 #   This file is a part of the pycor project. To obtain the latest
 #   development version, head over to the git repository available
@@ -24,6 +24,7 @@
 
 from .lxdClient import lxd
 from .configparser import config
+from .loghandler import logger
 
 
 # use ctypes to call libc mount
@@ -74,11 +75,12 @@ def create_base():
         }
     }
 
+    logger.debug(conf)
     return lxd.containers.create(conf, wait=True)
 
 
 # create a new (empty) container
-def launch(containerName):
+def create(containerName):
     conf = {
         'name': containerName,
         'architecture': config.get('launch', 'architecture'),
@@ -89,4 +91,5 @@ def launch(containerName):
         }
     }
 
+    logger.debug(conf)
     return lxd.containers.create(conf, wait=True)
