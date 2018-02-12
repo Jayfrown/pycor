@@ -26,9 +26,9 @@ from .loghandler import logger
 from .pylxdclient import lxd, lxdException
 from . import overlay
 
-def launch(containerName):
+def create(containerName):
     """
-    create an empty container, mount overlayfs and start it
+    create an empty container to mount overlayfs on
     create base container if it does not exist
 
     :param containerName: the new container's name
@@ -41,19 +41,28 @@ def launch(containerName):
     except lxdException.NotFound:
         logger.debug("initializing base environment")
         overlay.create_base()
+        pass
 
     # create empty container
     logger.debug("creating {}".format(containerName))
     container = overlay.create(containerName)
 
-    # mount overlayfs
+    logger.debug("{} state {}".format(container.name, container.status))
+    return container
+
+def start(container):
+    """
+    start a container
+
+    :param container: the pylxd container object
+    :return: the pylxd container object
+    """
+
     logger.debug("mounting overlayfs")
     overlay.mount(container.name)
-
-    # start container
     container.start(wait=True)
     logger.debug("{} state {}".format(container.name, container.status))
-    logger.info("created {}".format(container.name))
+    logger.info("launched {}".format(container.name))
     return container
 
 # dispatch based on cli args
@@ -67,25 +76,27 @@ def dispatch(cmd, args):
         else:
             import requests
             link = "https://frightanic.com/goodies_content/docker-names.php"
-            logger.debug("fetching docker-like name")
+            logger.debug("launch: fetching docker-like name")
             containerName = requests.get(link).text.strip().replace("_", "-")
 
         # new container on overlayfs
         try:
-            launch(containerName)
-        except Exception as e:
+            container = create(containerName)
+            start(container)
+        except Exception:
             import sys
             logger.debug("launch: caught exception")
+            msg = sys.exc_info()[1]
             traceback = sys.exc_info()[2]
 
             try:
-                container = lxd.containers.get(containerName)
                 logger.debug("launch: handling exception: deleting {}".format(container.name))
                 container.delete()
-                logger.debug("launch: raising exception")
-                raise Exception, e, traceback
             except NameError:
-                raise Exception, e, traceback
+                pass
+
+            logger.debug("launch: raising exception")
+            raise Exception, msg, traceback
 
 
     # umount overlay and delete container
